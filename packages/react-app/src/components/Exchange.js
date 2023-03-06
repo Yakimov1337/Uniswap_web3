@@ -33,17 +33,37 @@ function Exchange() {
         <button
           disabled={!"canApprove"}
           onClick={() => { }}
-          className={"canApprove" ? "bg-site-pink text-white" : "bg-site-dim2 text-site-dim-2" `${styles.actionButton}`}>
+          className={
+            `${"canApprove"
+              ? "bg-site-pink text-white"
+              : "bg-site-dim2 text-site-dim-2"
+            }    ${styles.actionButton}`
+          }
+        >
           {isApproving ? "Approving..." : "Approve"}
         </button>
       ) :
         <button
           disabled={!"canSwap"}
           onClick={() => { }}
-          className={"canSwap" ? "bg-site-pink text-white" : "bg-site-dim2 text-site-dim-2" `${styles.actionButton}`}>
+          className={
+            `${"canSwap"
+              ? "bg-site-pink text-white"
+              : "bg-site-dim2 text-site-dim-2"
+            }    ${styles.actionButton}`
+          }
+        >
           {isSwapping ? "Swapping..." : "hasEnoughBalance" ? "Swap" : "Insufficient balance"}
         </button>
       }
+
+      {"failureMessage" && !"resetState" ?
+        (
+          <p className={styles.message}>{"failureMessage"}</p>
+        ) : "successMessage" ?
+          (
+            <p className={styles.message}>{"successMessage"}</p>
+          ) : ""}
     </div>
   )
 }

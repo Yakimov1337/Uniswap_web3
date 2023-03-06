@@ -43,9 +43,11 @@ function Exchange({pools}) {
 
   const isApproving = isOperationPending(swapApproveState); 
   const isSwapping = isOperationPending(swapExecuteState);
+  const canApprove = !isApproving && approveNeeded;
+  const canSwap = !approveNeeded && !isSwapping && fromValueIsGreatThan0 && hasEnoughBalance;
 
-  // const successMessage = getSuccessMessage(); //TO DO
-  // const failureMessage = getFailureMessage(); //TO DO
+  const successMessage = getSuccessMessage(swapApproveState); 
+  const failureMessage = getFailureMessage(swapExecuteState); 
 
 
   return (

@@ -25,6 +25,7 @@ function Exchange({ pools }) {
   const routerContract = new Contract(ROUTER_ADDRESS, abis.router02);
   const fromTokenContract = new Contract(fromToken, ERC20.abi);
   const fromTokenBalance = useTokenBalance(fromToken, account);
+  const toTokenBalance = useTokenBalance(toToken, account);
   const tokenAllowance = useTokenAllowance(fromToken, account, ROUTER_ADDRESS) || parseUnits("0");
   const approveNeeded = fromValueBigNumber.gt(tokenAllowance);
   const fromValueIsGreatThan0 = fromValueBigNumber.gt(parseUnits("0"));
@@ -80,30 +81,45 @@ function Exchange({ pools }) {
     setFromToken(value)
   }
 
-  const onTokenChange = (value) => {
+  const onToTokenChange = (value) => {
     setToToken(value)
   }
 
   useEffect(() => {
-    if(failureMessage|| successMessage){
-      setTimeout(()=>{
+    if (failureMessage || successMessage) {
+      setTimeout(() => {
         setResetState(true);
         setFromValue("0");
         setToToken("");
-      },5000)
+      }, 5000)
     }
   }, [failureMessage, successMessage])
-  
+
 
   return (
     <div className="flex flex-col w-full items-center">
       <div className="mb-8">
-        <AmountOut />
-        <Balance />
+        <AmountOut
+          value={fromValue}
+          onChange={onFromValueChange}
+          currencyValue={fromToken}
+          onSelect={onFromTokenChange}
+          currencies={availableTOkens}
+          isSwapping={isSwapping && hasEnoughBalance}
+        />
+        <Balance tokenBalance={fromTokenBalance} />
       </div>
       <div className="mb-8 w-[100%]">
-        <AmountOut />
-        <Balance />
+        <AmountOut
+          fromToken={fromToken}
+          toToken={toToken}
+          amountIn={fromValueBigNumber}
+          pairContract={pairAddress}
+          currencyValue={toToken}
+          onSelect={onToTokenChange}
+          currencies={counterpartTokens}
+        />
+        <Balance tokenBalance={toTokenBalance} />
       </div>
 
       {'approveNeeded' && !isSwapping ? (

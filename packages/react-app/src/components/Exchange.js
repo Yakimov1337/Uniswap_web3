@@ -10,9 +10,39 @@ import { ROUTER_ADDRESS } from "../config";
 import { AmountIn, AmountOut, Balance } from "./";
 import styles from "../styles";
 
-function Exchange() {
-  const isApproving = isOperationPending('approve'); //TO DO
-  const isSwapping = isOperationPending('swap'); //TO DO
+function Exchange({pools}) {
+  const {account} = useEthers();
+  const [fromValue, setFromValue] = useState("0");
+  const [fromToken, setFromTokn] = useState(pools[0].token0Address);
+  const [toToken,setToToken] = useState("");
+  const [resetState, setResetState] = useState(false);
+
+  const fromValueBigNumber = parseUnits(fromValue);
+  const availableTOkens = getAvailableTokens(pools);
+  const counterpartTokens = getCounterpartTokens(pools,fromToken);
+  const pairAddress = findPoolByTokens(pools,fromToken,toToken)?.address ?? "";
+
+  const routerContract = new Contract(ROUTER_ADDRESS,abis.router02);
+  const fromTokenContract = new Contract(fromToken, ERC20.abi);
+  const fromTokenBalance = useTokenBalance(fromToken,account);
+  const tokenAllowance = useTokenAllowance(fromToken,account,ROUTER_ADDRESS) || parseUnits("0");
+  const approveNeeded = fromValueBigNumber.gt(tokenAllowance);
+  const fromValueIsGreatThan0 = fromValueBigNumber.gt(parseUnits("0"));
+  const hasEnoughBalance = fromValueBigNumber.lte(fromTokenBalance ?? parseUnits("0"));
+
+  const {state: swapApproveState, send: swapApproveSend} = useContractFunction(fromTokenContract,"approve",{
+    transactionName: "onApproveRequest",
+    gasLimitBufferPercentage: 10,
+  });
+
+  const {state: swapExecuteState, send: swapExecuteSend} = useContractFunction(routerContract,"swapExactTokensForTokens",{
+    transactionName: "swapExactTokensForTokens",
+    gasLimitBufferPercentage: 10,
+  });
+
+
+  const isApproving = isOperationPending(swapApproveState); 
+  const isSwapping = isOperationPending(swapExecuteState);
 
   // const successMessage = getSuccessMessage(); //TO DO
   // const failureMessage = getFailureMessage(); //TO DO

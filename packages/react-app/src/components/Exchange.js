@@ -10,45 +10,90 @@ import { ROUTER_ADDRESS } from "../config";
 import { AmountIn, AmountOut, Balance } from "./";
 import styles from "../styles";
 
-function Exchange({pools}) {
-  const {account} = useEthers();
+function Exchange({ pools }) {
+  const { account } = useEthers();
   const [fromValue, setFromValue] = useState("0");
-  const [fromToken, setFromTokn] = useState(pools[0].token0Address);
-  const [toToken,setToToken] = useState("");
+  const [fromToken, setFromToken] = useState(pools[0].token0Address);
+  const [toToken, setToToken] = useState("");
   const [resetState, setResetState] = useState(false);
 
   const fromValueBigNumber = parseUnits(fromValue);
   const availableTOkens = getAvailableTokens(pools);
-  const counterpartTokens = getCounterpartTokens(pools,fromToken);
-  const pairAddress = findPoolByTokens(pools,fromToken,toToken)?.address ?? "";
+  const counterpartTokens = getCounterpartTokens(pools, fromToken);
+  const pairAddress = findPoolByTokens(pools, fromToken, toToken)?.address ?? "";
 
-  const routerContract = new Contract(ROUTER_ADDRESS,abis.router02);
+  const routerContract = new Contract(ROUTER_ADDRESS, abis.router02);
   const fromTokenContract = new Contract(fromToken, ERC20.abi);
-  const fromTokenBalance = useTokenBalance(fromToken,account);
-  const tokenAllowance = useTokenAllowance(fromToken,account,ROUTER_ADDRESS) || parseUnits("0");
+  const fromTokenBalance = useTokenBalance(fromToken, account);
+  const tokenAllowance = useTokenAllowance(fromToken, account, ROUTER_ADDRESS) || parseUnits("0");
   const approveNeeded = fromValueBigNumber.gt(tokenAllowance);
   const fromValueIsGreatThan0 = fromValueBigNumber.gt(parseUnits("0"));
   const hasEnoughBalance = fromValueBigNumber.lte(fromTokenBalance ?? parseUnits("0"));
 
-  const {state: swapApproveState, send: swapApproveSend} = useContractFunction(fromTokenContract,"approve",{
+  const { state: swapApproveState, send: swapApproveSend } = useContractFunction(fromTokenContract, "approve", {
     transactionName: "onApproveRequest",
     gasLimitBufferPercentage: 10,
   });
 
-  const {state: swapExecuteState, send: swapExecuteSend} = useContractFunction(routerContract,"swapExactTokensForTokens",{
+  const { state: swapExecuteState, send: swapExecuteSend } = useContractFunction(routerContract, "swapExactTokensForTokens", {
     transactionName: "swapExactTokensForTokens",
     gasLimitBufferPercentage: 10,
   });
 
 
-  const isApproving = isOperationPending(swapApproveState); 
+  const isApproving = isOperationPending(swapApproveState);
   const isSwapping = isOperationPending(swapExecuteState);
   const canApprove = !isApproving && approveNeeded;
   const canSwap = !approveNeeded && !isSwapping && fromValueIsGreatThan0 && hasEnoughBalance;
 
-  const successMessage = getSuccessMessage(swapApproveState); 
-  const failureMessage = getFailureMessage(swapExecuteState); 
+  const successMessage = getSuccessMessage(swapApproveState);
+  const failureMessage = getFailureMessage(swapExecuteState);
 
+  const onApproveRequested = () => {
+    swapApproveSend(ROUTER_ADDRESS, ethers.constants.MaxUint256);
+  }
+
+  const onSwapRequest = () => {
+    swapExecuteSend(
+      fromValueBigNumber,
+      0,
+      [fromToken, toToken],
+      account,
+      Math.floor(Date.now() / 1000) + 60 * 2
+    ).then(() => {
+      setFromValue("0");
+    })
+  }
+
+  const onFromValueChange = (value) => {
+    const trimmedValu = value.trim();
+
+    try {
+      parseUnits(value);
+      setFromValue(value);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const onFromTokenChange = (value) => {
+    setFromToken(value)
+  }
+
+  const onTokenChange = (value) => {
+    setToToken(value)
+  }
+
+  useEffect(() => {
+    if(failureMessage|| successMessage){
+      setTimeout(()=>{
+        setResetState(true);
+        setFromValue("0");
+        setToToken("");
+      },5000)
+    }
+  }, [failureMessage, successMessage])
+  
 
   return (
     <div className="flex flex-col w-full items-center">

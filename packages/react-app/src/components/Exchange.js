@@ -31,15 +31,18 @@ function Exchange({ pools }) {
   const fromValueIsGreatThan0 = fromValueBigNumber.gt(parseUnits("0"));
   const hasEnoughBalance = fromValueBigNumber.lte(fromTokenBalance ?? parseUnits("0"));
 
-  const { state: swapApproveState, send: swapApproveSend } = useContractFunction(fromTokenContract, "approve", {
-    transactionName: "onApproveRequest",
-    gasLimitBufferPercentage: 10,
-  });
-
-  const { state: swapExecuteState, send: swapExecuteSend } = useContractFunction(routerContract, "swapExactTokensForTokens", {
-    transactionName: "swapExactTokensForTokens",
-    gasLimitBufferPercentage: 10,
-  });
+  // approve initiating a contract call (similar to use state) -> gives the state and the sender...
+  const { state: swapApproveState, send: swapApproveSend } =
+    useContractFunction(fromTokenContract, "approve", {
+      transactionName: "onApproveRequested",
+      gasLimitBufferPercentage: 10,
+    });
+  // swap initiating a contract call (similar to use state) -> gives the state and the sender...
+  const { state: swapExecuteState, send: swapExecuteSend } =
+    useContractFunction(routerContract, "swapExactTokensForTokens", {
+      transactionName: "swapExactTokensForTokens",
+      gasLimitBufferPercentage: 10,
+    });
 
 
   const isApproving = isOperationPending(swapApproveState);
@@ -47,8 +50,8 @@ function Exchange({ pools }) {
   const canApprove = !isApproving && approveNeeded;
   const canSwap = !approveNeeded && !isSwapping && fromValueIsGreatThan0 && hasEnoughBalance;
 
-  const successMessage = getSuccessMessage(swapApproveState);
-  const failureMessage = getFailureMessage(swapExecuteState);
+  const successMessage = getSuccessMessage(swapApproveState, swapExecuteState);
+  const failureMessage = getFailureMessage(swapApproveState, swapExecuteState);
 
   const onApproveRequested = () => {
     swapApproveSend(ROUTER_ADDRESS, ethers.constants.MaxUint256);
@@ -67,15 +70,13 @@ function Exchange({ pools }) {
   }
 
   const onFromValueChange = (value) => {
-    const trimmedValu = value.trim();
+    const trimmedValue = value.trim();
 
     try {
-      parseUnits(value);
+      trimmedValue && parseUnits(value);
       setFromValue(value);
-    } catch (error) {
-      console.log(error);
-    }
-  }
+    } catch (e) {}
+  };
 
   const onFromTokenChange = (value) => {
     setFromToken(value)
@@ -99,7 +100,7 @@ function Exchange({ pools }) {
   return (
     <div className="flex flex-col w-full items-center">
       <div className="mb-8">
-        <AmountOut
+        <AmountIn
           value={fromValue}
           onChange={onFromValueChange}
           currencyValue={fromToken}
@@ -125,7 +126,7 @@ function Exchange({ pools }) {
       {approveNeeded && !isSwapping ? (
         <button
           disabled={!canApprove}
-          onClick={() => { }}
+          onClick={onApproveRequested}
           className={
             `${canApprove
               ? "bg-site-pink text-white"
@@ -138,7 +139,7 @@ function Exchange({ pools }) {
       ) :
         <button
           disabled={!canSwap}
-          onClick={() => { }}
+          onClick={onSwapRequest}
           className={
             `${canSwap
               ? "bg-site-pink text-white"

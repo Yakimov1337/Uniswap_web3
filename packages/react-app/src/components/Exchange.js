@@ -122,12 +122,12 @@ function Exchange({ pools }) {
         <Balance tokenBalance={toTokenBalance} />
       </div>
 
-      {'approveNeeded' && !isSwapping ? (
+      {approveNeeded && !isSwapping ? (
         <button
-          disabled={!"canApprove"}
+          disabled={!canApprove}
           onClick={() => { }}
           className={
-            `${"canApprove"
+            `${canApprove
               ? "bg-site-pink text-white"
               : "bg-site-dim2 text-site-dim-2"
             }    ${styles.actionButton}`
@@ -137,25 +137,25 @@ function Exchange({ pools }) {
         </button>
       ) :
         <button
-          disabled={!"canSwap"}
+          disabled={!canSwap}
           onClick={() => { }}
           className={
-            `${"canSwap"
+            `${canSwap
               ? "bg-site-pink text-white"
               : "bg-site-dim2 text-site-dim-2"
             }    ${styles.actionButton}`
           }
         >
-          {isSwapping ? "Swapping..." : "hasEnoughBalance" ? "Swap" : "Insufficient balance"}
+          {isSwapping ? "Swapping..." : hasEnoughBalance ? "Swap" : "Insufficient balance"}
         </button>
       }
 
-      {"failureMessage" && !"resetState" ?
+      {failureMessage && !resetState ?
         (
-          <p className={styles.message}>{"failureMessage"}</p>
+          <p className={styles.message}>{failureMessage}</p>
         ) : "successMessage" ?
           (
-            <p className={styles.message}>{"successMessage"}</p>
+            <p className={styles.message}>{successMessage}</p>
           ) : ""}
     </div>
   )

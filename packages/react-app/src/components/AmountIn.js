@@ -8,6 +8,7 @@ function AmountIn({ value, onChange, currencyValue, onSelect, currencies, isSwap
   const [showList, setShowList] = useState(false)
   const [activeCurrency, setActiveCurrency] = useState("Select");
   const ref = useRef();
+  console.log(value);
 
   useOnClickOutside(ref, () => setShowList(false));
 
@@ -19,6 +20,11 @@ function AmountIn({ value, onChange, currencyValue, onSelect, currencies, isSwap
     }
   }, [currencies, currencyValue])
 
+  const handleInputChange = (e) => {
+    const inputValue = e.target.value;
+    typeof onChange === 'function' && onChange(inputValue);
+  };
+
   return (
     <div className={styles.amountContainer}>
       <input
@@ -26,7 +32,7 @@ function AmountIn({ value, onChange, currencyValue, onSelect, currencies, isSwap
         type="number"
         value={value}
         disabled={isSwapping}
-        onChange={(e) => typeof onChange === "function" && onChange(e.target.value)}
+        onChange={handleInputChange}
         className={styles.amountInput} />
       <div className='relative' onClick={() => setShowList(!showList)}>
         <button className={styles.currencyButton}>

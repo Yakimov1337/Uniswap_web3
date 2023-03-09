@@ -12,12 +12,13 @@ import styles from "../styles";
 
 function Exchange({ pools }) {
   const { account } = useEthers();
-  const [fromValue, setFromValue] = useState("0");
+  const [fromValue, setFromValue] = useState("");
   const [fromToken, setFromToken] = useState(pools[0].token0Address);
   const [toToken, setToToken] = useState("");
   const [resetState, setResetState] = useState(false);
 
-  const fromValueBigNumber = parseUnits(fromValue);
+  const parseFromValue = fromValue !== "" ? fromValue : "0"; 
+  const fromValueBigNumber = parseUnits(parseFromValue);
   const availableTOkens = getAvailableTokens(pools);
   const counterpartTokens = getCounterpartTokens(pools, fromToken);
   const pairAddress = findPoolByTokens(pools, fromToken, toToken)?.address ?? "";
@@ -70,12 +71,15 @@ function Exchange({ pools }) {
   }
 
   const onFromValueChange = (value) => {
-    const trimmedValue = value.trim();
-
-    try {
-      trimmedValue && parseUnits(value);
-      setFromValue(value);
-    } catch (e) {}
+    if (value !== "") {
+      try {
+        const trimmedValue = value.trim();
+        trimmedValue && parseUnits(value);
+        setFromValue(value);
+      } catch (e) { }
+    }else {
+      setFromValue("")
+    }
   };
 
   const onFromTokenChange = (value) => {

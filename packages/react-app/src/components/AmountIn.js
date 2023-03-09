@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 import styles from '../styles'
 import { chevronDown } from '../assets'
@@ -10,6 +10,14 @@ function AmountIn({ value, onChange, currencyValue, onSelect, currencies, isSwap
   const ref = useRef();
 
   useOnClickOutside(ref, () => setShowList(false));
+
+  useEffect(() => {
+    if (Object.keys(currencies).includes(currencyValue)) {
+      setActiveCurrency(currencies[currencyValue]);
+    } else {
+      setActiveCurrency("Select")
+    }
+  }, [currencies, currencyValue])
 
   return (
     <div className={styles.amountContainer}>
